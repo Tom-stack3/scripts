@@ -1,0 +1,82 @@
+#!/bin/sh
+
+# Note that there's a known bug with Wayland, which sometimes doesn't display all windows (like GNOME apps):
+# https://bugs.launchpad.net/ubuntu/+source/gnome-terminal/+bug/1725991
+# Recommended to switch to Xorg if you encounter this issue.
+
+toggle_brave() {
+    # If Brave is running, focus it. Otherwise, open it.
+    # If the --incognito flag is set, do the same for a private window.
+    INCOGNITO_MAGIC_STRING='Private Tab'
+    if [[ "$1" == '--incognito' ]]; then
+        # The window title for incognito windows is postfixed with 'Private Tab' when using my extension
+        WINDOW_ID=$(wmctrl -l | grep -F -- "$INCOGNITO_MAGIC_STRING - Brave" | awk '{print $1}')
+        if [ -n "$WINDOW_ID" ]; then
+            wmctrl -i -a "$WINDOW_ID"
+        else
+            brave-browser --incognito &
+        fi
+    else
+        WINDOW_ID=$(wmctrl -l | grep -Fv -- "$INCOGNITO_MAGIC_STRING - Brave" | grep -F -- '- Brave' | awk '{print $1}')
+        if [ -n "$WINDOW_ID" ]; then
+            wmctrl -i -a "$WINDOW_ID"
+        else
+            brave-browser &
+        fi
+    fi
+}
+
+toggle_obsidian() {
+    # If Obsidian is running, focus it. Otherwise, open it.
+    if wmctrl -l | grep -q "Obsidian"; then
+        wmctrl -xa "obsidian.obsidian"
+    else
+        ~/Apps/obsidian/Obsidian.AppImage &
+    fi
+}
+
+toggle_generic_app() {
+    # If the app is running, focus it. Otherwise, open it.
+    if wmctrl -lx | grep -iq "$1"; then
+        wmctrl -xa "$2"
+    else
+        $1 &
+    fi
+}
+
+toggle_terminal() {
+    toggle_generic_app "gnome-terminal" "gnome.Terminal.Gnome-terminal"
+}
+
+toggle_vscode() {
+    toggle_generic_app "code" "code.Code"
+}
+
+toggle_file_manager() {
+    toggle_generic_app "nautilus" "org.gnome.Nautilus"
+}
+
+# Handle supplied argument
+case "$1" in
+    brave)
+        toggle_brave
+        ;;
+    brave-incognito)
+        toggle_brave --incognito
+        ;;
+    obsidian)
+        toggle_obsidian
+        ;;
+    terminal)
+        toggle_terminal
+        ;;
+    vscode)
+        toggle_vscode
+        ;;
+    files)
+        toggle_file_manager
+        ;;
+    *)
+        echo "Invalid option. Use: brave, brave-incognito, obsidian, terminal, vscode, files"
+        ;;
+esac
