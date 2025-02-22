@@ -35,5 +35,5 @@ if [ -f ~/.bash_functions ]; then
 fi
 
 # ===== Default Programs =====
-export EDITOR="vim"
+export EDITOR="nvim"
 export PAGER="less"
